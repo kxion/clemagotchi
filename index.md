@@ -58,6 +58,19 @@ I knocked up a quick [Javascript prototype](js-prototype) of the actual
 tamagotchi logic to make sure I knew what I wanted the firmware to do. It's a
 lot quicker to prototype in Javascript before writing the firmware in C.
 
+## Roughing out the displays
+
+I could also prototype out the screens. I made a few monochrome icons for the
+display and wrote some Python scripts to start roughing out the screens. At this
+point I found a post indicating that the Adafruit graphics library wouldn't work
+on the ATTiny85. This was entirely due to space constraints: the ATTiny85 has
+around 16-tweets of non-volatile storage for program code and graphics.
+
+The SSD1306 screen works by, essentially, specifying rectangular area of the
+screen to update and then sending data which fills that area. I wrote a Python
+script with some functions for blit-ing data in this manner to a PNG and
+prototyped the screens.
+
 ## Programming the ATTiny85 and not blowing up the display
 
 I wanted to be able to program the
@@ -75,7 +88,7 @@ clear that I had to spend a little time worrying about voltages.  I couldn't put
 5V logic levels on the display without running the risk of frying the
 electronics. I had to make sure that the Clemagotchi was exposed to no more than
 3.3V. Fortunately, all of the signals on the ISP header are unidirectional and
-so a [74HC405](http://www.nxp.com/documents/data_sheet/74HC4050.pdf) could be
+so a [74HC4050](http://www.nxp.com/documents/data_sheet/74HC4050.pdf) could be
 used to convert the 5V Arduino Uno into a 3.3V ISP.
 
 For those following along at home, here's the schematic:
@@ -93,6 +106,17 @@ as the Arduino boots and, similarly, the pull-up on <span class="ob">RST</span>
 is there to prevent accidental resets. These were probably overkill but it
 seemed sensible to include them.
 
+Since this was going to be a temporary use bit of hardware, I wired it up on my
+Arduino prototyping breadboard which is made from a Poundland whiteboard. Here's
+a picture:
+
+<img src="isp-hardware.jpg">
+
+The yellow clip which was used to attach directly to the ATTiny85 is clearly
+visible. Notice that there's no power wire coming from the Arduino. That's
+intentional. I wanted to power the Clemagotchi off battery lest my tired brain
+accidentally connected to the 5V Arduino power.
+
 If I were being even more careful, I'd have added a tri-state buffer to cause
 the ISP pins to be electrically disconnected when the programmer wasn't running.
 For my needs I got away with it but if I ever make a variable-voltage ISP
@@ -100,9 +124,61 @@ shield for the Arduino, I'll add one.
 
 # Building <small>(T minus 5 days)</small>
 
+I live with my girlfriend and so I had to take opportunities where I get them.
+Five days before "V-day", she went to be early. This was my opportunity. The
+screen hard arrived and so I experimented with driving the display from my
+Arduino Uno via a 74HC4050 for level-conversion.
+
+I knew that memory was going to be tight for the display so I wrote a Python
+script to perform a simple run-length encoding of the images and save them
+directly as a C++ header suitable for inclusion into the firmware. By around
+this point, I had display updates working quite nicely.
+
+<div class="figure">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/AmO9o_UYeFY"
+frameborder="0" allowfullscreen></iframe>
+</div>
+
+This was using the hardware SPI support on the Arduino Uno. The ATTiny85 doesn't
+have hardware SPI but the [USI
+hardware](http://www.atmel.com/images/doc2582.pdf) on the ATTiny85 could be bent
+to my will via the [TinySPI](https://github.com/JChristensen/tinySPI).
+
+The ATTiny85 has five easily accessible GPIO pins. The display needed four of
+them so I had one left for two buttons. Oh dear :(. After a little head
+scratching I came up with the (non-original) idea of wiring the two switches to
+form a switchable voltage divider. The GPI pin thereby gets VCC, half-VCC or 0V
+depending on whether no buttons are pressed, the "select" button is pressed or
+the "action" button is pressed. This design precludes pressing both buttons at
+once but I had no need of that in the UI.
+
+Here's the full Clemagotchi schematic I came up with:
+
 ![Clemagotchi schematic](schematic-clemagotchi.svg)
 
+The pull-up on <span class="ob">CS</span> is there to make sure the display
+is inactive when programming the ATTiny85. The pull-up on <span
+class="ob">RST</span> is to protect against spurious resets. In the final
+hardware module I also added a little reset switch which simply pulled <span
+class="ob">RST</span> low but this was probably unnecessary.
+
 # Packaging <small>(T minus 4 days)</small>
+
+At this point, I had a working Clemagotchi module but no nice case:
+
+<div class="figure">
+<iframe width="560" height="315" src="https://www.youtube.com/embed/xY1wfzIo8cQ"
+frameborder="0" allowfullscreen></iframe>
+</div>
+
+I made the executive decision that I didn't have enough time to learn enough CAD
+to 3D print a funky enclosure at work. Instead I very, very quietly marked up
+and drilled a black ABS project box for the Clemagotchi. I used some small files
+to nicely bezel the front window and I test-fit the module.
+
+The next morning at work I "borrowed" the colour laser printer to print a nice
+decal on a sheet of adhesive labels. The decal was designed to be forgiving in
+alignment and, hopefully, to evoke a nice "retro" gaming æsthetic.
 
 # Refining <small>(T minus 3, 2, 1&hellip;)</small>
 
