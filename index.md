@@ -5,6 +5,8 @@ title: "\"Clemagotchi\": Building a Valentine's Day Present"
 
 # Introduction
 
+<img src="clemagotchi-photo.jpg">
+
 My girlfriend, Clem, and I have a running joke that when she comes home from
 work she's akin to a [tamagotchi](https://en.wikipedia.org/wiki/Tamagotchi);
 she needs feeding, bathing and entertaining and then she's happy. For
